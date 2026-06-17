@@ -1,0 +1,356 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>そっと・ナビ（仮・モック）</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&family=Noto+Serif+JP:wght@500;600&display=swap');
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  --night: #14131f; --night2: #1c1b2b; --surface: #232238; --surface2: #2b2940;
+  --line: #383556; --ink: #ECE8F2; --muted: #9b96b8; --muted2: #6f6a8c;
+  --dawn: #F0B98C; --dawn2: #E89B7A; --calm: #8ea4d6;
+  min-height: 100vh; display:flex; align-items:center; justify-content:center;
+  background: radial-gradient(120% 80% at 50% 0%, #221f33 0%, #14131f 60%, #0e0d16 100%);
+  font-family: 'Noto Sans JP', 'Hiragino Sans', 'Hiragino Kaku Gothic ProN', system-ui, sans-serif;
+  color: var(--ink); padding: 16px;
+}
+.device {
+  width: 100%; max-width: 430px; min-height: 760px; background: var(--night);
+  border: 1px solid var(--line); border-radius: 28px; overflow: hidden;
+  display:flex; flex-direction:column; box-shadow: 0 30px 80px rgba(0,0,0,.5); position: relative;
+}
+.bar { display:flex; align-items:center; justify-content:space-between; padding: 14px 16px; border-bottom: 1px solid var(--line); }
+.brand { font-family:'Noto Serif JP',serif; font-weight:600; letter-spacing:.04em; font-size:15px; }
+.brand em { color: var(--muted2); font-style: normal; font-size: 11px; }
+.ghost { background:none; border:none; color: var(--muted); font-size:18px; cursor:pointer; padding:4px 8px; border-radius:8px; font-family:inherit; }
+.ghost:hover { color: var(--ink); background: var(--surface); }
+.stage { flex:1; overflow-y:auto; }
+.pad { padding: 26px 20px 30px; }
+.eyebrow { color: var(--dawn); font-size:12px; letter-spacing:.18em; margin-bottom:14px; }
+.display { font-family:'Noto Serif JP',serif; font-weight:600; font-size:30px; line-height:1.32; margin-bottom:16px; }
+.sub { font-family:'Noto Serif JP',serif; font-weight:600; font-size:24px; line-height:1.4; margin-bottom:12px; }
+.lead { color: var(--muted); font-size:14px; line-height:1.7; margin-bottom:22px; }
+.fine { color: var(--muted2); font-size:11px; line-height:1.6; margin-top:14px; }
+.grid { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+.tile { text-align:left; background: var(--surface); border:1px solid var(--line); border-radius:16px; padding:16px 14px; cursor:pointer; transition:.15s; display:flex; flex-direction:column; gap:6px; font-family:inherit; color:inherit; }
+.tile:hover { border-color: var(--dawn); transform: translateY(-2px); background: var(--surface2); }
+.tile-emoji { color: var(--dawn); font-size:16px; }
+.tile-label { font-weight:700; font-size:14px; }
+.tile-hint { color: var(--muted); font-size:11px; line-height:1.5; }
+.stack { display:flex; flex-direction:column; gap:10px; }
+.row { text-align:left; background: var(--surface); border:1px solid var(--line); border-radius:14px; padding:16px 16px; cursor:pointer; transition:.15s; display:flex; flex-direction:column; gap:4px; font-family:inherit; color:inherit; }
+.row:hover { border-color: var(--dawn); background: var(--surface2); transform: translateX(3px); }
+.row-main { font-weight:600; font-size:15px; }
+.row-sub { color: var(--muted); font-size:12px; }
+.horizon { position:relative; margin: 18px 0 8px; }
+.horizon-band { height: 64px; border-radius:14px; background: linear-gradient(90deg, #15131f 0%, #1f1c33 35%, #3a3055 60%, var(--dawn2) 88%, var(--dawn) 100%); border:1px solid var(--line); }
+.horizon-marker { position:absolute; top:-6px; transform: translateX(-50%); display:flex; flex-direction:column; align-items:center; }
+.dot { width:14px; height:14px; border-radius:50%; background:#fff; box-shadow:0 0 0 4px rgba(255,255,255,.18), 0 2px 8px rgba(0,0,0,.5); }
+.you { margin-top:6px; font-size:10px; color:var(--ink); background:rgba(0,0,0,.35); padding:2px 7px; border-radius:20px; white-space:nowrap; }
+.horizon-labels { display:flex; justify-content:space-between; margin-top:10px; font-size:11px; color:var(--muted); }
+.panel { margin-top:18px; display:flex; flex-direction:column; gap:1px; background:var(--line); border:1px solid var(--line); border-radius:16px; overflow:hidden; }
+.panel-item { background: var(--surface); padding:14px 16px; }
+.panel-t { font-weight:700; font-size:13px; color: var(--dawn); margin-bottom:5px; letter-spacing:.02em; }
+.panel-d { font-size:13px; line-height:1.65; color: var(--ink); opacity:.92; }
+.cta-row { display:flex; gap:10px; margin-top:20px; }
+.cta { flex:1; border:none; border-radius:14px; padding:15px; font-weight:700; font-size:14px; cursor:pointer; background: linear-gradient(180deg, var(--dawn) 0%, var(--dawn2) 100%); color:#2a1a12; transition:.15s; font-family:inherit; }
+.cta:hover { filter:brightness(1.05); }
+.cta.secondary { background: var(--surface); color: var(--muted); border:1px solid var(--line); flex:0 0 auto; padding:15px 18px; }
+.chat { padding: 18px 16px 8px; }
+.bubbles { display:flex; flex-direction:column; gap:12px; }
+.bubble { max-width: 86%; padding:13px 15px; border-radius:18px; font-size:14px; line-height:1.7; white-space:pre-wrap; }
+.bubble.assistant { background: var(--surface); border:1px solid var(--line); border-bottom-left-radius:6px; align-self:flex-start; }
+.bubble.user { background: linear-gradient(180deg, var(--calm) 0%, #7689c4 100%); color:#10131f; border-bottom-right-radius:6px; align-self:flex-end; font-weight:500; }
+.typing { display:flex; gap:5px; align-items:center; }
+.typing span { width:7px; height:7px; border-radius:50%; background: var(--muted); animation: blink 1.2s infinite both; }
+.typing span:nth-child(2){ animation-delay:.2s } .typing span:nth-child(3){ animation-delay:.4s }
+@keyframes blink { 0%,80%,100%{opacity:.25} 40%{opacity:1} }
+.composer { display:flex; gap:8px; padding:12px 14px 8px; border-top:1px solid var(--line); }
+.field { flex:1; background: var(--surface); border:1px solid var(--line); border-radius:22px; padding:12px 16px; color:var(--ink); font-size:14px; font-family:inherit; outline:none; }
+.field:focus { border-color: var(--dawn); }
+.field::placeholder { color: var(--muted2); }
+.send { border:none; border-radius:22px; padding:0 18px; background: var(--dawn); color:#2a1a12; font-weight:700; cursor:pointer; font-family:inherit; }
+.send:disabled { opacity:.4; cursor:default; }
+.disclaimer { padding:8px 16px 14px; font-size:10.5px; color: var(--muted2); text-align:center; line-height:1.5; }
+.mockpill { display:inline-block; margin-bottom:4px; font-size:10px; color:#2a1a12; background:var(--dawn); padding:1px 8px; border-radius:20px; font-weight:700; }
+.modal { position:absolute; inset:0; background:rgba(8,7,14,.7); display:flex; align-items:flex-end; }
+.sheet { width:100%; background: var(--night2); border-top:1px solid var(--line); border-radius:24px 24px 0 0; padding:22px 20px 28px; max-height:88%; overflow-y:auto; }
+.sheet-head { display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; }
+.sheet-head h3 { font-family:'Noto Serif JP',serif; font-size:18px; font-weight:600; }
+.sheet-lead { color: var(--muted); font-size:13px; line-height:1.7; margin-bottom:16px; }
+.sheet-list { list-style:none; display:flex; flex-direction:column; gap:11px; }
+.sheet-list li { font-size:13px; line-height:1.6; padding-left:14px; position:relative; color: var(--ink); opacity:.92; }
+.sheet-list li:before { content:''; position:absolute; left:0; top:8px; width:6px; height:6px; border-radius:50%; background: var(--dawn); }
+.sheet-list b { color: var(--dawn); font-weight:700; }
+.sheet-fine { margin-top:16px; font-size:12px; color: var(--muted2); line-height:1.7; }
+@media (prefers-reduced-motion: reduce){ *{ animation:none!important; transition:none!important; } }
+</style>
+</head>
+<body>
+<div class="device">
+  <header class="bar">
+    <button class="ghost" id="back" aria-label="最初に戻る">←</button>
+    <span class="brand">そっと・ナビ <em>（仮・モック）</em></span>
+    <button class="ghost" id="info" aria-label="この対話の設計について">ⓘ</button>
+  </header>
+  <main class="stage" id="stage"></main>
+  <div id="dock"></div>
+</div>
+<div id="modalRoot"></div>
+
+<script>
+// ───────────────────────────────────────────────
+// デモ用モック版（AI非接続）。応答はすべて台本ロジック。
+// サーバー不要・単一HTML。file:// でも GitHub Pages でも動く。
+// ───────────────────────────────────────────────
+const PERSONAS = {
+  fact:   { label:"淡々と事実だけ", hint:"余計なことは言わず、必要な事実と次の一手だけ", emoji:"▪" },
+  senpai: { label:"親身な先輩", hint:"ちょっと砕けて、味方として隣に座る感じ", emoji:"◍" },
+  hoken:  { label:"保健室の先生", hint:"落ち着いて、責めず、丁寧に", emoji:"✛" },
+  friend: { label:"理解ある友人", hint:"怒らない・引かない・茶化さない友達", emoji:"◔" },
+};
+const CARDS = [
+  { id:"anxious", label:"ちょっと不安", sub:"なんとなく心配で開いた", flow:"window" },
+  { id:"timing",  label:"検査のタイミングを知りたい", sub:"いつ調べればいいのか", flow:"window" },
+  { id:"symptom", label:"気になる症状がある", sub:"違和感・痛み・できものなど", flow:"symptom" },
+  { id:"talk",    label:"相手にどう言うか迷う", sub:"検査・予防・通知のこと", flow:"talk" },
+  { id:"silent",  label:"何も言いたくないけど、助けて", sub:"うまく言葉にできない", flow:"silent" },
+];
+const TIMINGS = [
+  { id:"today",    label:"今日・昨日", pos:0.1 },
+  { id:"fewdays",  label:"2〜3日前", pos:0.3 },
+  { id:"week",     label:"1週間くらい前", pos:0.55 },
+  { id:"twoweeks", label:"2週間以上前", pos:0.85 },
+  { id:"unknown",  label:"よく覚えていない", pos:0.4 },
+];
+const PANEL = [
+  ["今日できること","症状がなければ、検査できる日をカレンダーに置くだけでOK。今日はそれ1つで十分。"],
+  ["まだ分からないこと","今すぐ検査しても、時期が早いと正しく出ないことがある。「今は判断が早い」だけで、悪い結果という意味ではない。"],
+  ["受診を急ぐサイン","強い痛み・出血・発熱・できものの急な悪化などがあれば、適期を待たずに受診を。"],
+  ["安心が近づく日","上のタイムラインの目安あたりが、不安をかなり整理できる日。それまでは1日1分の確認だけ。"],
+  ["不安が強いとき","検索を繰り返すより、深呼吸して「次の確認日」を見る。つらさが続くなら相談窓口へ。"],
+];
+
+const state = { screen:"intro", persona:null, card:null, timing:null, messages:[], busy:false };
+const stage = document.getElementById("stage");
+const dock  = document.getElementById("dock");
+const esc = (s)=>s.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+
+document.getElementById("back").onclick = reset;
+document.getElementById("info").onclick = openModal;
+
+function reset(){ state.screen="intro"; state.persona=null; state.card=null; state.timing=null; state.messages=[]; state.busy=false; dock.innerHTML=""; render(); }
+
+function render(){
+  dock.innerHTML = "";
+  if (state.screen==="intro")     return renderIntro();
+  if (state.screen==="cards")     return renderCards();
+  if (state.screen==="timing")    return renderTiming();
+  if (state.screen==="companion") return renderCompanion();
+  if (state.screen==="chat")      return renderChat();
+}
+
+function renderIntro(){
+  const tiles = Object.entries(PERSONAS).map(([k,p])=>`
+    <button class="tile" data-p="${k}">
+      <span class="tile-emoji">${p.emoji}</span>
+      <span class="tile-label">${p.label}</span>
+      <span class="tile-hint">${p.hint}</span>
+    </button>`).join("");
+  stage.innerHTML = `<section class="pad">
+    <p class="eyebrow">夜の、静かな伴走役</p>
+    <h1 class="display">全部を<br>思い出さなくていい。</h1>
+    <p class="lead">何をしたかは聞きません。これから不安と害を減らすことだけ、一緒に。今日はどんなふうに話したいですか？</p>
+    <div class="grid">${tiles}</div>
+    <p class="fine">※ デモ用モック版（AIには接続していません）。応答は流れを見せるための台本です。</p>
+  </section>`;
+  stage.querySelectorAll(".tile").forEach(b=> b.onclick=()=>{ state.persona=b.dataset.p; state.screen="cards"; render(); });
+}
+
+function renderCards(){
+  const rows = CARDS.map(c=>`<button class="row" data-c="${c.id}"><span class="row-main">${c.label}</span><span class="row-sub">${c.sub}</span></button>`).join("");
+  stage.innerHTML = `<section class="pad">
+    <p class="eyebrow">入口</p>
+    <h2 class="sub">今、何に近いですか？</h2>
+    <p class="lead">近いものを1つ。詳しい説明はいりません。</p>
+    <div class="stack">${rows}</div>
+  </section>`;
+  stage.querySelectorAll(".row").forEach(b=> b.onclick=()=>{
+    const c = CARDS.find(x=>x.id===b.dataset.c); state.card=c.id;
+    if (c.flow==="window") { state.screen="timing"; render(); } else startChat();
+  });
+}
+
+function renderTiming(){
+  const c = CARDS.find(x=>x.id===state.card);
+  const rows = TIMINGS.map(t=>`<button class="row" data-t="${t.id}"><span class="row-main">${t.label}</span></button>`).join("");
+  stage.innerHTML = `<section class="pad">
+    <p class="eyebrow">${c?c.label:""}</p>
+    <h2 class="sub">心当たりは、だいたいいつ頃？</h2>
+    <p class="lead">時期だけで大丈夫。何があったかは聞きません。覚えていなくても進めます。</p>
+    <div class="stack">${rows}</div>
+  </section>`;
+  stage.querySelectorAll(".row").forEach(b=> b.onclick=()=>{ state.timing=b.dataset.t; state.screen="companion"; render(); });
+}
+
+function renderCompanion(){
+  const t = TIMINGS.find(x=>x.id===state.timing);
+  const pos = (t?t.pos:0.3)*100;
+  const panel = PANEL.map(p=>`<div class="panel-item"><div class="panel-t">${p[0]}</div><div class="panel-d">${p[1]}</div></div>`).join("");
+  stage.innerHTML = `<section class="pad">
+    <p class="eyebrow">ウィンドウ期間ナビ</p>
+    <h2 class="sub">待つ時間を、<br>一人にしない。</h2>
+    <div class="horizon">
+      <div class="horizon-band"></div>
+      <div class="horizon-marker" style="left:${pos}%"><span class="dot"></span><span class="you">今ここ</span></div>
+      <div class="horizon-labels"><span>今夜（不安が大きい）</span><span>安心が近づく日</span></div>
+    </div>
+    <p class="fine">※ あくまで目安のイメージです。検査できる時期は感染の種類で異なり（多くは数週間が目安）、正確な適期は医療機関・検査機関で確認してください。</p>
+    <div class="panel">${panel}</div>
+    <div class="cta-row">
+      <button class="cta" id="toChat">気になることを話す</button>
+      <button class="cta secondary" id="toCards">入口に戻る</button>
+    </div>
+    <p class="fine">毎日1分の確認だけ続けましょう。次の確認日まで、検索より深呼吸を。</p>
+  </section>`;
+  document.getElementById("toChat").onclick = startChat;
+  document.getElementById("toCards").onclick = ()=>{ state.screen="cards"; render(); };
+}
+
+function startChat(){
+  state.messages = [{ role:"assistant", content: openerFor(state.card, state.persona) }];
+  state.screen = "chat";
+  render();
+}
+
+function renderChat(){
+  stage.innerHTML = `<section class="chat"><div class="bubbles" id="bubbles"></div></section>`;
+  const wrap = document.getElementById("bubbles");
+  state.messages.forEach(m=> wrap.appendChild(bubble(m.role, m.content)));
+  dock.innerHTML = `
+    <div class="composer">
+      <input class="field" id="field" placeholder="思っていることを、そのまま" />
+      <button class="send" id="send">送る</button>
+    </div>
+    <div class="disclaimer"><span class="mockpill">デモ用モック応答</span><br>診断ではありません。気になる症状や強い不安が続くときは医療機関・相談窓口へ。</div>`;
+  const field = document.getElementById("field");
+  const sendBtn = document.getElementById("send");
+  const doSend = ()=> sendMock(field);
+  sendBtn.onclick = doSend;
+  field.onkeydown = (e)=>{ if(e.key==="Enter") doSend(); };
+  scrollChat();
+}
+
+function bubble(role, text){
+  const d = document.createElement("div");
+  d.className = "bubble " + role;
+  d.textContent = text;
+  return d;
+}
+function scrollChat(){ stage.scrollTop = stage.scrollHeight; }
+
+function sendMock(field){
+  const text = field.value.trim();
+  if (!text || state.busy) return;
+  const wrap = document.getElementById("bubbles");
+  state.messages.push({ role:"user", content:text });
+  wrap.appendChild(bubble("user", text));
+  field.value = "";
+  state.busy = true;
+  // typing indicator
+  const typing = document.createElement("div");
+  typing.className = "bubble assistant typing";
+  typing.innerHTML = "<span></span><span></span><span></span>";
+  wrap.appendChild(typing); scrollChat();
+  const reply = mockReply(text, state.persona, state.card);
+  setTimeout(()=>{
+    typing.remove();
+    state.messages.push({ role:"assistant", content:reply });
+    wrap.appendChild(bubble("assistant", reply));
+    state.busy = false; scrollChat();
+  }, 700 + Math.random()*500);
+}
+
+// ── 台本ロジック（設計原則：聞きすぎない・責めない・怖がらせない・次の一手だけ・診断しない）──
+function lead(persona, distress){
+  if (distress) return ({ fact:"", senpai:"おう、よく言ってくれた。", hoken:"つらいですよね。", friend:"うん、しんどいね。" })[persona]||"";
+  return ({ fact:"", senpai:"うん。", hoken:"そうですね。", friend:"そっか。" })[persona]||"";
+}
+function mockReply(text, persona, card){
+  const t = text;
+  const has = (re)=> re.test(t);
+  // 強い苦痛のサイン → まず受け止め、窓口へ（安全最優先）
+  if (has(/死に|消えたい|もう無理|生きてい|限界/)){
+    return lead(persona,true) + "その気持ちを一人で抱えなくて大丈夫。いまは検査の話より、あなたの安全がいちばん大事。信頼できる人や、いのちの電話などの相談窓口に、声をかけてみてほしい。ここはデモだけど、本番でも“ここでひとりにしない導線”を必ず入れます。";
+  }
+  // 症状
+  if (card==="symptom" || has(/痛|かゆ|でき(もの|物)|でもの|出血|血が|発熱|熱が|しこり|ただれ|違和感|おりもの|分泌|腫れ/)){
+    return lead(persona) + "症状があるなら、検査の適期を待つより受診を優先したい。今日の一手は「行ける医療機関を1つ決める」だけでOK。\n・まだ分からないこと：原因はここでは判断しません（診断はしない）。\n・急ぐサイン：強い痛み・出血・発熱・急な悪化があれば早めに。";
+  }
+  // 相手に伝える
+  if (has(/相手|パートナー|彼氏|彼女|旦那|妻|夫|セフレ|元カノ|元カレ|言う|伝え|連絡|どう言/)){
+    return lead(persona) + "責める言い方にしないのがコツ。たとえば——\n「あなたを疑ってるわけじゃなくて、お互い安心したいから一緒に検査しよう。私も受けるよ」\n相手との関係（恋人／一度きり など）を教えてくれたら、もう少し言い回しを合わせて整えます。";
+  }
+  // 陰性・大丈夫
+  if (has(/陰性|大丈夫|平気|問題な|セーフ|結果/)){
+    return lead(persona) + "陰性は安心材料。ただ「その時点・その項目について」の話で、時期が早ければまだ言い切れないし、検査に含まれていない感染症もある。\n次の一手は「次にいつ・何を確認するか」を1つだけ決めておくこと。陰性＝無敵、にはしないでおこう。";
+  }
+  // めんどう
+  if (has(/めんど|面倒|やりたくな|あとで|後で|だるい/)){
+    return lead(persona) + "わかる。じゃあ今日は1つだけ。「検査できる日をカレンダーに入れる」、それだけでいい。続きはまた今度で大丈夫。";
+  }
+  // 検査・時期
+  if (has(/検査|いつ|タイミング|調べ|何日|どのくらい|期間|受けれ|受けら/)){
+    return lead(persona) + "検査できる時期は感染の種類で違って、多くは数週間が目安。今日は「検査できる日をカレンダーに置く」だけでOK。正確な適期は検査機関か医療者で確認しよう。\n・今すぐ調べても早すぎると正しく出ないことがある＝悪い結果という意味じゃない。";
+  }
+  // 不安全般
+  if (has(/不安|こわ|怖|眠れ|寝れ|つら|しんど|落ち着か|パニック|そわそわ|気になって/)){
+    return lead(persona,false) + "その不安は自然なこと。検索を繰り返すより、いまは「次の確認日」を決めて、そこまでは1日1分だけ見る、にしよう。つらさが続くときは一人で抱えず、相談窓口も使ってね。";
+  }
+  // 短い相槌
+  if (has(/^(うん|はい|ありがと|サンキュ|了解|わかった|おけ|ok|OK)/)){
+    return lead(persona) + "うん、それでいい。今日はここまでで十分。気になったらまたいつでも。次の確認日だけ忘れずに。";
+  }
+  // デフォルト
+  return lead(persona) + "なるほど。もう少しだけ教えて——いま一番近いのは、検査の時期・体のこと・相手に言うこと、どれ？　近いものから、次の一手を1つだけ出すよ。（全部思い出さなくて大丈夫）";
+}
+
+function openerFor(card, p){
+  if (card==="symptom") return "症状があるんだね。まず大事なことを1つだけ。痛みや出血、発熱、できものが急に悪くなる感じがあるなら、検査適期を待たずに受診を優先してほしい。今の様子、少しだけ教えてくれる？（無理に詳しく言わなくて大丈夫）";
+  if (card==="talk"){
+    if (p==="fact") return "相手に伝える件だね。相手との関係（恋人・一度きり・元パートナーなど）と、伝えたいこと（検査・予防・通知）だけ教えて。言い方の案を一緒に作る。";
+    return "相手にどう言うか、一緒に言葉を作ろう。責める言い方にならないように整える。相手との関係（恋人・一度きりなど）と、伝えたいことだけ教えてくれる？";
+  }
+  if (card==="silent") return "うん、言葉にしなくて大丈夫。昨日のことを全部思い出さなくていい。今できることだけ、一緒に1つずつ整理しよう。今いちばん近いのは——不安？　体の心配？　誰かに言うか迷ってる？";
+  if (p==="fact")   return "了解。不安の正体を、事実と段取りに変えていく。今いちばん知りたいのは、検査の時期？　それとも今日できること？";
+  if (p==="senpai") return "おう、よく開いてくれた。大丈夫、ここでは説教しない。まず一緒に、今のモヤモヤを「いつ・何をするか」に変えていこ。気になってるのは検査のタイミング？それとも体の感じ？";
+  if (p==="friend") return "来てくれてよかった。茶化さないし引かないから安心して。全部思い出さなくていいよ。今いちばん気になってるのって、検査のことかな、それとも体のこと？";
+  return "よく来てくれました。落ち着いて、一つずつ整理しましょう。全部を思い出す必要はありません。今いちばん気になっているのは、検査の時期のことですか？　それとも体のことですか？";
+}
+
+function openModal(){
+  const root = document.getElementById("modalRoot");
+  root.innerHTML = `<div class="modal" id="ov"><div class="sheet" id="sheet">
+    <div class="sheet-head"><h3>この対話の設計について</h3><button class="ghost" id="close">✕</button></div>
+    <p class="sheet-lead">「医療者にインタビューして対話型に」を具体化するための、たたき台の設計根拠です。実在する臨床コミュニケーションの枠に接地させています。</p>
+    <ul class="sheet-list">
+      <li><b>非告白入口</b>：「何をしたか」ではなく「今、何に困っているか」から入る。問診の逆。</li>
+      <li><b>動機づけ面接（MI）</b>：是認・聞き返し・自律尊重。説教・断罪をしない。</li>
+      <li><b>トラウマインフォームド</b>：安全・選択・主体性。詳細を強要しない。</li>
+      <li><b>プレインランゲージ</b>：短く、専門用語を避け、一度に1つだけ。</li>
+      <li><b>固定出力ディシプリン</b>：今できること／まだ分からないこと／受診サイン／安心が近づく日／不安が強いときの一手。</li>
+      <li><b>無敵感を与えない</b>：「安全です」ではなく「次の行動が明確です」。陰性≠無敵。</li>
+      <li><b>診断しない・つなぐ</b>：医療判断は医療機関・検査機関・保健所へ。SaMD領域に踏み込まない。</li>
+    </ul>
+    <p class="sheet-fine">※ 本デモはAI非接続のモック（応答は台本）。本番はこの原則をそのままAIのシステム原則に固定します。</p>
+  </div></div>`;
+  document.getElementById("ov").onclick = (e)=>{ if(e.target.id==="ov") root.innerHTML=""; };
+  document.getElementById("close").onclick = ()=> root.innerHTML="";
+}
+
+render();
+</script>
+</body>
+</html>
